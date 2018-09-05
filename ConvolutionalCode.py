@@ -48,8 +48,10 @@ def Decoder(input,output,rate):
     ret = 0;
 
     ShiftRegister = [999,999,999,999,999,999,999];
-    A = [];
-    B = [];
+    inputA = [];
+    inputB = [];
+
+    output.clear();
 
     #if rate == "1/2": (default)
     BitStreamLen = int(len(input)/2); 
@@ -68,53 +70,64 @@ def Decoder(input,output,rate):
         MaskLen = 6;
         PunctureMaskA = [1,1,1,1,1,1];
         PunctureMaskB = [1,0,1,0,1,0];
+    
 
+    #interpolate the puncture
     MaskCounter = 0;
     currentIndex = 0;
     for i in range(BitStreamLen):
 
         if PunctureMaskA[MaskCounter] == 1:
-            inputA = input[currentIndex];
+            inputA.append(input[currentIndex]);
             currentIndex = currentIndex + 1;
         else:
-            inputA = 1;
+            inputA.append(0);  #LLR = log2(1);
 
         if PunctureMaskB[MaskCounter] == 1:
-            inputB = input[currentIndex];
+            inputB.append(input[currentIndex]);
             currentIndex = currentIndex + 1;
         else:
-            inputB = 1;
+            inputB.append(0);  #LLR = log2(1);
 
         MaskCounter = (MaskCounter+1) % MaskLen;
+
+
+    #forward propagation
+    for i in range(BitStreamLen - 6): # the last 6 bits have to tail (six "0")
 
         for j in range(6,0,-1):
             ShiftRegister[j] = ShiftRegister[j-1];
 
-        a = 2*atanh(tanh(ShiftRegister[2]/2)*tanh(ShiftRegister[3]/2)*tanh(ShiftRegister[5]/2)*tanh(ShiftRegister[6]/2)*tanh(inputA/2));
-        b = 2*atanh(tanh(ShiftRegister[1]/2)*tanh(ShiftRegister[2]/2)*tanh(ShiftRegister[3]/2)*tanh(ShiftRegister[6]/2)*tanh(inputB/2));
+        a = 2*atanh(tanh(ShiftRegister[2]/2)*tanh(ShiftRegister[3]/2)*tanh(ShiftRegister[5]/2)*tanh(ShiftRegister[6]/2)*tanh(inputA[i]/2));
+        b = 2*atanh(tanh(ShiftRegister[1]/2)*tanh(ShiftRegister[2]/2)*tanh(ShiftRegister[3]/2)*tanh(ShiftRegister[6]/2)*tanh(inputB[i]/2));
 
         LLR = a + b;
 
         ShiftRegister[0] = LLR;
 
-        a = 2*atanh(tanh(ShiftRegister[0]/2)*tanh(ShiftRegister[2]/2)*tanh(ShiftRegister[3]/2)*tanh(ShiftRegister[5]/2)*tanh(inputA/2));
-        b = 2*atanh(tanh(ShiftRegister[0]/2)*tanh(ShiftRegister[1]/2)*tanh(ShiftRegister[2]/2)*tanh(ShiftRegister[3]/2)*tanh(inputB/2));
+        output.append(LLR);
+
+    for i in range(6): # the last 6 bits have to tail (six "0"s)
+        output.append(999);
+
+
+
+    #backward progagation
+    ShiftRegister = [999,999,999,999,999,999,999];
+   
+    for i in range(BitStreamLen - 7,-1,-1): # the last 6 bits have to tail (six "0")
+
+        for j in range(0,6,1):
+            ShiftRegister[j] = ShiftRegister[j + 1];
+
+        a = 2*atanh(tanh(ShiftRegister[0]/2)*tanh(ShiftRegister[2]/2)*tanh(ShiftRegister[3]/2)*tanh(ShiftRegister[5]/2)*tanh(inputA[i]/2));
+        b = 2*atanh(tanh(ShiftRegister[0]/2)*tanh(ShiftRegister[1]/2)*tanh(ShiftRegister[2]/2)*tanh(ShiftRegister[3]/2)*tanh(inputB[i]/2));
 
         LLR = a + b;
 
-        ShiftRegister[6] = ShiftRegister[6] + LLR; 
+        ShiftRegister[6] = LLR;
 
-        if i > 5:
-            if ShiftRegister[6] > 0:
-                output.append(0);
-            else:
-                output.append(1);
-
-    for i in range(5,-1,-1):
-        if ShiftRegister[i] > 0:
-            output.append(0);
-        else:
-            output.append(1);
+        output[i] = output[i] + LLR;
 
 
     return ret;
