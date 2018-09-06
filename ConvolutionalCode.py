@@ -47,7 +47,8 @@ def Encoder(input,output,rate):
 def Decoder(input,output,rate):
     ret = 0;
 
-    ShiftRegister = [999,999,999,999,999,999,999];
+    alpha = 1- 1e-10;
+    
     inputA = [];
     inputB = [];
 
@@ -93,13 +94,15 @@ def Decoder(input,output,rate):
 
 
     #forward propagation
-    for i in range(BitStreamLen - 6): # the last 6 bits have to tail (six "0")
+    ShiftRegister = [999,999,999,999,999,999,999];
+
+    for i in range(BitStreamLen - 6): # the last 6 bits have to be tail (six "0")
 
         for j in range(6,0,-1):
-            ShiftRegister[j] = ShiftRegister[j-1];
+            ShiftRegister[j] = ShiftRegister[j - 1];
 
-        a = 2*atanh(tanh(ShiftRegister[2]/2)*tanh(ShiftRegister[3]/2)*tanh(ShiftRegister[5]/2)*tanh(ShiftRegister[6]/2)*tanh(inputA[i]/2));
-        b = 2*atanh(tanh(ShiftRegister[1]/2)*tanh(ShiftRegister[2]/2)*tanh(ShiftRegister[3]/2)*tanh(ShiftRegister[6]/2)*tanh(inputB[i]/2));
+        a = 2*atanh(tanh(ShiftRegister[2]/2)*tanh(ShiftRegister[3]/2)*tanh(ShiftRegister[5]/2)*tanh(ShiftRegister[6]/2)*tanh(inputA[i]/2)*alpha);
+        b = 2*atanh(tanh(ShiftRegister[1]/2)*tanh(ShiftRegister[2]/2)*tanh(ShiftRegister[3]/2)*tanh(ShiftRegister[6]/2)*tanh(inputB[i]/2)*alpha);
 
         LLR = a + b;
 
@@ -107,27 +110,27 @@ def Decoder(input,output,rate):
 
         output.append(LLR);
 
-    for i in range(6): # the last 6 bits have to tail (six "0"s)
+    for i in range(6): # the last 6 bits have to be tail (six "0"s)
         output.append(999);
 
 
 
     #backward progagation
     ShiftRegister = [999,999,999,999,999,999,999];
-   
-    for i in range(BitStreamLen - 7,-1,-1): # the last 6 bits have to tail (six "0")
+      
+    for i in range(BitStreamLen - 7,-1,-1): # the last 6 bits have to be tail (six "0")
 
         for j in range(0,6,1):
             ShiftRegister[j] = ShiftRegister[j + 1];
 
-        a = 2*atanh(tanh(ShiftRegister[0]/2)*tanh(ShiftRegister[2]/2)*tanh(ShiftRegister[3]/2)*tanh(ShiftRegister[5]/2)*tanh(inputA[i]/2));
-        b = 2*atanh(tanh(ShiftRegister[0]/2)*tanh(ShiftRegister[1]/2)*tanh(ShiftRegister[2]/2)*tanh(ShiftRegister[3]/2)*tanh(inputB[i]/2));
+        a = 2*atanh(tanh(ShiftRegister[0]/2)*tanh(ShiftRegister[2]/2)*tanh(ShiftRegister[3]/2)*tanh(ShiftRegister[5]/2)*tanh(inputA[i + 6]/2)*alpha);
+        b = 2*atanh(tanh(ShiftRegister[0]/2)*tanh(ShiftRegister[1]/2)*tanh(ShiftRegister[2]/2)*tanh(ShiftRegister[3]/2)*tanh(inputB[i + 6]/2)*alpha);
 
         LLR = a + b;
 
         ShiftRegister[6] = LLR;
 
-        output[i] = output[i] + LLR;
+        output[i] =  LLR;
 
 
     return ret;
@@ -136,6 +139,23 @@ def Decoder(input,output,rate):
 if __name__ == "__main__":
     input = [1,0,1,1,0,0,0,1,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0];
     output = [];
-    Encode(input,output,"2/3");
+    Encoder(input,output,"1/2");
+
+    input.clear();
+
+    for i in range(len(output)):
+        if output[i] == 0:
+            input.append(2);
+        else:
+            input.append(-2);
+
+    Decoder(input,output,"1/2");
+
+    for i in range(len(output)):
+        if output[i] >= 0:
+            output[i] = 0;
+        else:
+            output[i] = 1;
+
     print(output);
 
