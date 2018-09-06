@@ -1,5 +1,5 @@
 # WLAN_PHY_PythonModule
-WLAN PHY Python Module (In development)
+(In development)
 
 WLAN_PHY_PythonModule is a framework for 802.11 PHY algorithm development and simulation.
 
