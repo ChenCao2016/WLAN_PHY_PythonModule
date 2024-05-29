@@ -4,6 +4,7 @@ from matplotlib import pyplot
 from Synchronization import *
 from LSIGdecoder import *
 
+#---------------------------------------------------------------
 file = open("11AX.dat", "rb")
 
 IQdata = array.array("f")
@@ -24,6 +25,9 @@ for i in range(0, len(Idata)):
     power.append(Idata[i]*Idata[i] + Qdata[i]*Qdata[i])
 
 samplingRate = 80e6
+#---------------------------------------------------------------
+
+#---------------------------------------------------------------
 LSTF_endIndex = []
 LSTF_sync(samples, samplingRate, LSTF_endIndex)
 
