@@ -5,6 +5,7 @@ from Constellation import *
 from ChannelCoding import *
 import math
 import cmath
+from scipy.fft import fft, ifft, fftshift, fftfreq
 
 
 # ----------------------------------------------------------------------
@@ -26,8 +27,11 @@ def LSIG_demodulator(samples, samplingRate, LSTF_endIndex, LLTF_channel, LSIG_sy
         startIndex = LSTF_endIndex + int(samplingRate*(LLTF_length + L_cp)) + 1
         ratio = int(samplingRate/L_preambleBandth)
         windowSize = int((LSIG_length - L_cp) * samplingRate)
-        temp = []
-        DFT(samples[startIndex:startIndex + windowSize: ratio], temp)
+        
+        # we will need index shift for bandwith beyond 20MHz
+        # temp = []
+        # DFT(samples[startIndex:startIndex + windowSize: ratio], temp)
+        temp = fftshift(fft(samples[startIndex:startIndex + windowSize: ratio]))
 
         # Phase track
         phaseShift = 0

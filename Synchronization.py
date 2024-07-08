@@ -3,6 +3,10 @@ import copy
 import math
 from DFT import *
 from GlobeParameter import *
+from scipy.fft import fft, ifft, fftshift, fftfreq
+
+from matplotlib import pyplot
+import numpy as np
 
 
 # ----------------------------------------------------------------------
@@ -189,11 +193,15 @@ def LLTF_channelEstimate(samples, samplingRate, LSTF_endIndex, LLTF_channel):
         windowSize = int((LLTF_length-LLTF_cp)/2*samplingRate)
         ratio = int(samplingRate/L_preambleBandth)
 
-        temp1 = []
-        DFT(samples[startIndex:startIndex + windowSize: ratio], temp1)
-        temp2 = []
-        DFT(samples[startIndex + windowSize:startIndex +
-            2*windowSize: ratio], temp2)
+        # temp1 = []
+        # DFT(samples[startIndex:startIndex + windowSize: ratio], temp1)
+        # temp2 = []
+        # DFT(samples[startIndex + windowSize:startIndex + 2*windowSize: ratio], temp2)
+
+        #we will need index shift for bandwith beyond 20MHz
+        temp1 = fftshift(fft(samples[startIndex:startIndex + windowSize: ratio]))
+        temp2 = fftshift(fft(samples[startIndex + windowSize:startIndex + 2*windowSize: ratio]))
+
 
         for i in range(len(LLTF)):
             if LLTF[i] == 0:
