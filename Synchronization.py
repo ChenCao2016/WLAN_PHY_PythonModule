@@ -213,3 +213,34 @@ def LLTF_channelEstimate(samples, samplingRate, LSTF_endIndex, LLTF_channel):
         print(str(err))
 
     return
+
+
+
+def channelExtand2p(LLTF_channel, channel):
+    #USIG is 28 + 28 subcarriers (including 4 pilot subcarriers) in 20MHz bandwidth
+    #I will do an exploration on LLTF channel estimation (LLTF_channel)
+    LLTF_channel_ext = np.array(LLTF_channel)
+
+    phaseExploration = np.angle(LLTF_channel_ext[7]) - np.angle(LLTF_channel_ext[6])
+    phaseExploration = np.angle(LLTF_channel_ext[6]) - phaseExploration
+    magnitudeExploration = np.abs(LLTF_channel_ext[6])
+    LLTF_channel_ext[5] = magnitudeExploration*np.exp(1j*phaseExploration)
+    print(LLTF_channel_ext[5])
+
+    phaseExploration = np.angle(LLTF_channel_ext[8]) - np.angle(LLTF_channel_ext[6])
+    phaseExploration = np.angle(LLTF_channel_ext[6]) - phaseExploration
+    magnitudeExploration = np.abs(LLTF_channel_ext[6])
+    LLTF_channel_ext[4] = magnitudeExploration*np.exp(1j*phaseExploration)
+
+
+    phaseExploration = np.angle(LLTF_channel_ext[57]) - np.angle(LLTF_channel_ext[58])
+    phaseExploration = np.angle(LLTF_channel_ext[58]) - phaseExploration
+    magnitudeExploration = np.abs(LLTF_channel_ext[58])
+    LLTF_channel_ext[59] = magnitudeExploration*np.exp(1j*phaseExploration)
+
+    phaseExploration = np.angle(LLTF_channel_ext[56]) - np.angle(LLTF_channel_ext[58])
+    phaseExploration = np.angle(LLTF_channel_ext[58]) - phaseExploration
+    magnitudeExploration = np.abs(LLTF_channel_ext[58])
+    LLTF_channel_ext[60] = magnitudeExploration*np.exp(1j*phaseExploration)
+
+    return LLTF_channel_ext

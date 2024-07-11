@@ -48,8 +48,6 @@ def BCCEncoder(input, rate, output):
 # input: LLR array
 # output: LLR array
 # rate: "1/2","3/4","2/3"
-
-
 def BCCDecoder(input, rate, output):
     ret = 0
 

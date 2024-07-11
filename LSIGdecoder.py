@@ -84,6 +84,7 @@ def LSIG_demodulator(samples, samplingRate, LSTF_endIndex, LLTF_channel, LSIG_sy
             correlation += symbol[i]*conj(symbol2[i])
             power += abs(symbol[i])*abs(symbol2[i])
 
+        print(f"RL-SIG detection: {abs(correlation)/power}")
         if abs(correlation)/power > 0.9:
             # This is 11AX
             # MRC
