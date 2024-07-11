@@ -216,7 +216,7 @@ def LLTF_channelEstimate(samples, samplingRate, LSTF_endIndex, LLTF_channel):
 
 
 
-def channelExtand2p(LLTF_channel, channel):
+def channelExtand2p(LLTF_channel):
     #USIG is 28 + 28 subcarriers (including 4 pilot subcarriers) in 20MHz bandwidth
     #I will do an exploration on LLTF channel estimation (LLTF_channel)
     LLTF_channel_ext = np.array(LLTF_channel)
