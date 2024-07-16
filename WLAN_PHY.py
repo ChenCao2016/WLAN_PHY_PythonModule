@@ -32,7 +32,8 @@ from ChannelCoding import *
 #---------------------------------------------------------------
 
 
-mdic = loadmat("Verify_5180_SaveAlways_new_dut_fw_good.mat")
+#mdic = loadmat("Verify_5180_SaveAlways_new_dut_fw_good.mat")
+mdic = loadmat("Verify_5955_SaveAlways_new_dut_fw_bad.mat")
 samples = mdic["IQsamples"][0]
 samplingRate = mdic["sampling rate"][0][0]
 print("sampling rate: {}".format(samplingRate))

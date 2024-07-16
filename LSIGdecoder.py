@@ -123,8 +123,7 @@ def LSIG_decoder(LSIG_symbol, LSIG_bits, LSIG_info):
         dLLR = []
         Deinterleaver(LLR, 1, dLLR)
 
-        decoded_LLR = []
-        BCCDecoder(dLLR, "1/2", decoded_LLR)
+        decoded_LLR = BCCDecoder(dLLR, "1/2")
 
         LSIG_bits.clear()
         for x in decoded_LLR:

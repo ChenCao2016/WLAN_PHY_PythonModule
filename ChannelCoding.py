@@ -1,4 +1,5 @@
 from math import *
+import numpy as np
 
 
 # input: bits array
@@ -48,15 +49,14 @@ def BCCEncoder(input, rate, output):
 # input: LLR array
 # output: LLR array
 # rate: "1/2","3/4","2/3"
-def BCCDecoder(input, rate, output):
+def BCCDecoder(input, rate):
     ret = 0
 
     alpha = 1 - 1e-10
+    alpha = 1
 
     inputA = []
     inputB = []
-
-    output.clear()
 
     #if rate == "1/2": (default)
     BitStreamLen = int(len(input)/2)
@@ -95,55 +95,68 @@ def BCCDecoder(input, rate, output):
 
         MaskCounter = (MaskCounter+1) % MaskLen
 
-    # forward propagation
-    ShiftRegister = [999, 999, 999, 999, 999, 999, 999]
 
-    for i in range(BitStreamLen - 6):  # the last 6 bits have to be tail (six "0")
+    output = np.zeros(BitStreamLen, dtype=float)
+    output[-6:] = 999 # the last 6 bits have to be tail (six "0"s)
 
-        for j in range(6, 0, -1):
-            ShiftRegister[j] = ShiftRegister[j - 1]
 
-        a = 2*atanh(tanh(ShiftRegister[2]/2)*tanh(ShiftRegister[3]/2)*tanh(
-            ShiftRegister[5]/2)*tanh(ShiftRegister[6]/2)*tanh(inputA[i]/2)*alpha)
-        b = 2*atanh(tanh(ShiftRegister[1]/2)*tanh(ShiftRegister[2]/2)*tanh(
-            ShiftRegister[3]/2)*tanh(ShiftRegister[6]/2)*tanh(inputB[i]/2)*alpha)
+    for repeat in range(40):
+        # forward propagation
+        ShiftRegister = [999, 999, 999, 999, 999, 999, 999]
 
-        LLR = a + b
+        for i in range(BitStreamLen - 6):  # the last 6 bits have to be tail (six "0")
 
-        ShiftRegister[0] = LLR
+            for j in range(6, 0, -1):
+                ShiftRegister[j] = ShiftRegister[j - 1]
 
-        output.append(LLR)
+            # a = 2*atanh(tanh(ShiftRegister[2]/2)*tanh(ShiftRegister[3]/2)*tanh(
+            #     ShiftRegister[5]/2)*tanh(ShiftRegister[6]/2)*tanh(inputA[i]/2)*alpha)
+            # b = 2*atanh(tanh(ShiftRegister[1]/2)*tanh(ShiftRegister[2]/2)*tanh(
+            #     ShiftRegister[3]/2)*tanh(ShiftRegister[6]/2)*tanh(inputB[i]/2)*alpha)
 
-    for i in range(6):  # the last 6 bits have to be tail (six "0"s)
-        output.append(999)
+            a = atanh(tanh(ShiftRegister[2])*tanh(ShiftRegister[3])*tanh(
+                ShiftRegister[5])*tanh(ShiftRegister[6])*tanh(inputA[i])*alpha)
+            b = atanh(tanh(ShiftRegister[1])*tanh(ShiftRegister[2])*tanh(
+                ShiftRegister[3])*tanh(ShiftRegister[6])*tanh(inputB[i])*alpha)
 
-    # backward progagation
-    ShiftRegister = [999, 999, 999, 999, 999, 999, 999]
+            LLR = a + b
 
-    for i in range(BitStreamLen - 7, -1, -1):  # the last 6 bits have to be tail (six "0")
+            ShiftRegister[0] = output[i] + LLR
 
-        for j in range(0, 6, 1):
-            ShiftRegister[j] = ShiftRegister[j + 1]
+            output[i] = output[i] + LLR
 
-        a = 2*atanh(tanh(ShiftRegister[0]/2)*tanh(ShiftRegister[2]/2)*tanh(
-            ShiftRegister[3]/2)*tanh(ShiftRegister[5]/2)*tanh(inputA[i + 6]/2)*alpha)
-        b = 2*atanh(tanh(ShiftRegister[0]/2)*tanh(ShiftRegister[1]/2)*tanh(
-            ShiftRegister[2]/2)*tanh(ShiftRegister[3]/2)*tanh(inputB[i + 6]/2)*alpha)
+        # backward progagation
+        ShiftRegister = [999, 999, 999, 999, 999, 999, 999]
 
-        LLR = a + b
+        for i in range(BitStreamLen - 7, -1, -1):  # the last 6 bits have to be tail (six "0")
 
-        ShiftRegister[6] = LLR
+            for j in range(0, 6, 1):
+                ShiftRegister[j] = ShiftRegister[j + 1]
 
-        output[i] = output[i] + LLR
+            # a = 2*atanh(tanh(ShiftRegister[0]/2)*tanh(ShiftRegister[2]/2)*tanh(
+            #     ShiftRegister[3]/2)*tanh(ShiftRegister[5]/2)*tanh(inputA[i + 6]/2)*alpha)
+            # b = 2*atanh(tanh(ShiftRegister[0]/2)*tanh(ShiftRegister[1]/2)*tanh(
+            #     ShiftRegister[2]/2)*tanh(ShiftRegister[3]/2)*tanh(inputB[i + 6]/2)*alpha)
 
-    return ret
+            a = atanh(tanh(ShiftRegister[0])*tanh(ShiftRegister[2])*tanh(
+                ShiftRegister[3])*tanh(ShiftRegister[5])*tanh(inputA[i + 6])*alpha)
+            b = atanh(tanh(ShiftRegister[0])*tanh(ShiftRegister[1])*tanh(
+                ShiftRegister[2])*tanh(ShiftRegister[3])*tanh(inputB[i + 6])*alpha)
+
+            LLR = a + b
+
+            ShiftRegister[6] = output[i] + LLR
+
+            output[i] = output[i] + LLR
+
+    return output
 
 
 if __name__ == "__main__":
     input = [1, 0, 1, 1, 0, 0, 0, 1, 0, 0, 1,
              1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     output = []
-    Encoder(input, output, "1/2")
+    BCCEncoder(input, output, "1/2")
 
     input.clear()
 
@@ -153,7 +166,7 @@ if __name__ == "__main__":
         else:
             input.append(-0.1)
 
-    Decoder(input, output, "1/2")
+    BCCDecoder(input, output, "1/2")
 
     for i in range(len(output)):
         if output[i] >= 0:

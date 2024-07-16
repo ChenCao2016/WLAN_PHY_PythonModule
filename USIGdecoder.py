@@ -101,10 +101,10 @@ def USIG_decoder(LSIG1_symbol, LSIG2_symbol, LSIG_bits):
     dLLR1 = BCCDeinterleaver.deinterleave(np.array(LLR1))
     dLLR2 = BCCDeinterleaver.deinterleave(np.array(LLR2))
 
-    dLLR1 = np.array(dLLR1)
-    dLLR1[np.abs(dLLR1) < 0.35] = 0
-    dLLR2 = np.array(dLLR2)
-    dLLR2 =  dLLR2*200
+    #dLLR1 = np.array(dLLR1)
+    #dLLR1[np.abs(dLLR1) < 1.5] = 0
+    # dLLR2 = np.array(dLLR2)
+    # dLLR2 =  dLLR2*200
 
     dLLR = np.concatenate((np.array(dLLR1), np.array(dLLR2)))
     print(dLLR)
@@ -119,8 +119,7 @@ def USIG_decoder(LSIG1_symbol, LSIG2_symbol, LSIG_bits):
     # print(dLLR_bits)
 
 
-    decoded_LLR = []
-    BCCDecoder(dLLR, "1/2", decoded_LLR)
+    decoded_LLR = BCCDecoder(dLLR, "1/2")
 
     print(decoded_LLR)
     LSIG_bits.clear()
