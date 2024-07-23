@@ -1,6 +1,8 @@
 import numpy as np
 from scipy.fft import fft, ifft, fftshift, fftfreq
-
+import ChannelCoding
+import Interleaving
+import Constellation
 
 class timeWindows:
     def __init__(self):
@@ -110,6 +112,57 @@ class generateLSTFandLLTF:
 
         return
 generateLSTFandLLTF = generateLSTFandLLTF()
+
+
+class generateLSIG:
+    def __init__(self):
+        self.LSIG_duration = 4e-6
+        self.TGI = 0.8e-6
+        self.k = np.arange(-26,27,1)
+        self.subcarrierSpace = 312.5e3
+        self.Ntone = 26*2
+        self.Ntx = 1
+        self.pliot64 = [11, 25, 39, 53]
+        self.pliot64Symbol = [1, 1, 1, -1]
+        self.DC64 = 32
+
+        #result
+        self.LSIG_timeDomain = None
+        self.startIndex = None
+        self.endIndex = None
+
+    def __call__(self, content, BW, samplingRate, transitionTime = 0):
+        encoded = ChannelCoding.BCCEncoder(content, "1/2")
+        interleaved = Interleaving.Interleaver(encoded, 1)
+        symbols = Constellation.BPSKmapper(interleaved)
+
+        if BW == 20e6:
+            LSIG_subcarrier = np.zeros(64,dtype=complex)
+            symbolCounter = 0
+            for i in range(64):
+                if i in self.pliot64:
+                    LSIG_subcarrier[i] = self.pliot64Symbol[self.pliot64.index(i)]
+                elif i == self.DC64:
+                    LSIG_subcarrier[i] = 0
+                else:
+                    LSIG_subcarrier[i] = symbols[symbolCounter]
+                    symbolCounter += 1
+
+            self.LSIG_timeDomain = np.zeros(int(self.LSIG_duration*samplingRate),dtype=complex)
+            startIndex = -int(transitionTime/2*samplingRate)
+            for n in range(startIndex,startIndex+len(self.LSIG_timeDomain)):
+                t = n/samplingRate
+                timeWindows(t,transitionTime,self.LSIG_duration)
+                self.LSIG_timeDomain[n-startIndex] = 1/np.sqrt(self.Ntone*self.Ntx)*timeWindows.coef*np.sum(LSIG_subcarrier*np.exp(1j*2*np.pi*self.k*self.subcarrierSpace*(t-self.TGI)))
+            self.startIndex = -startIndex
+            self.endIndex = startIndex+len(self.LSIG_timeDomain)
+        else:
+            self.LSIG_timeDomain = None
+            self.startIndex = None
+            self.endIndex = None
+            raise Exception("BW not supported")
+        return
+
 
 if __name__ == "__main__":
     import matplotlib.pyplot as plt

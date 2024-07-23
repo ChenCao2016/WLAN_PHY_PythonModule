@@ -5,10 +5,9 @@ import numpy as np
 # input: bits array
 # output: bits array
 # rate: "1/2","3/4","2/3"
-def BCCEncoder(input, rate, output):
-    ret = 0
+def BCCEncoder(input, rate):
 
-    output.clear()
+    output = []
     ShiftRegister = [0, 0, 0, 0, 0, 0, 0]
     BitStreamLen = len(input)
 
@@ -44,7 +43,7 @@ def BCCEncoder(input, rate, output):
 
         MaskCounter = (MaskCounter+1) % MaskLen
 
-    return ret
+    return output
 
 # input: LLR array
 # output: LLR array
@@ -99,8 +98,14 @@ def BCCDecoder(input, rate):
     output = np.zeros(BitStreamLen, dtype=float)
     output[-6:] = 999 # the last 6 bits have to be tail (six "0"s)
 
+    outputForward = np.zeros(BitStreamLen, dtype=float)
+    outputForward[-6:] = 999
 
-    for repeat in range(40):
+    outputBackward = np.zeros(BitStreamLen, dtype=float)
+    outputBackward[-6:] = 999
+
+
+    for repeat in range(100):
         # forward propagation
         ShiftRegister = [999, 999, 999, 999, 999, 999, 999]
 
@@ -121,9 +126,8 @@ def BCCDecoder(input, rate):
 
             LLR = a + b
 
-            ShiftRegister[0] = output[i] + LLR
-
-            output[i] = output[i] + LLR
+            ShiftRegister[0] = outputBackward[i] + LLR
+            outputForward[i] = outputBackward[i] + LLR
 
         # backward progagation
         ShiftRegister = [999, 999, 999, 999, 999, 999, 999]
@@ -145,9 +149,13 @@ def BCCDecoder(input, rate):
 
             LLR = a + b
 
-            ShiftRegister[6] = output[i] + LLR
+            ShiftRegister[6] = outputForward[i] + LLR
+            outputBackward[i] = outputForward[i] + LLR
 
-            output[i] = output[i] + LLR
+
+        # combine the forward and backward
+        for i in range(BitStreamLen):
+            output[i] = outputForward[i] + outputBackward[i]
 
     return output
 

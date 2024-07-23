@@ -1,10 +1,9 @@
 import math
 import numpy as np
 
-def Interleaver(input, N_CBPS, output):
-    ret = 0
+def Interleaver(input, N_CBPS):
 
-    output.clear()
+    output = []
 
     s = max(int(N_CBPS/2), 1)
     size = len(input)
@@ -16,7 +15,7 @@ def Interleaver(input, N_CBPS, output):
 
         output.append(input[k])
 
-    return
+    return output
 
 
 def Deinterleaver(input, N_CBPS, output):

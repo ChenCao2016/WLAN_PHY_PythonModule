@@ -22,3 +22,18 @@ def BPSKDemapperCenter(symbols, LLRs, center = (-1,1), variance=1):
                     ((x.real - center[0])**2 ))/2/variance)
 
     return ret
+
+
+def BPSKmapper(bits):
+
+    symbols = []
+
+    for x in bits:
+        if x == 0:
+            symbols.append(-1)
+        elif x == 1:    
+            symbols.append(1)
+        else:
+            raise Exception(f"Invalid bit {x}")
+
+    return symbols
