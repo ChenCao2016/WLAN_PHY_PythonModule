@@ -172,6 +172,28 @@ class generateLSIG:
     
 generateLSIG = generateLSIG()
 
+class generateLegacyPreamble:
+    def __init__(self):
+        self.result = None
+        self.startIndex = None 
+        self.endIndex = None
+        self.midIndex1 = None
+        self.midIndex2 = None
+
+    def __call__(self, BW, samplingRate, SIGbit, transitionTime = 0):
+        generateLSTFandLLTF(BW, samplingRate, transitionTime)
+        generateLSIG(SIGbit, BW, samplingRate, transitionTime)
+
+        ltf = generateLSTFandLLTF.result
+        lsig = generateLSIG.LSIG_timeDomain
+        ltf[-generateLSIG.startIndex:] = ltf[-generateLSIG.startIndex:] + lsig[:generateLSIG.startIndex]
+        self.result = np.concatenate((ltf,lsig[generateLSIG.startIndex:]))
+        self.startIndex = generateLSTFandLLTF.startIndex
+        self.endIndex = len(self.result) - generateLSIG.startIndex
+        self.midIndex1 = generateLSTFandLLTF.midIndex
+        self.midIndex2 = generateLSTFandLLTF.endIndex
+
+generateLegacyPreamble = generateLegacyPreamble()
 
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
@@ -219,6 +241,17 @@ if __name__ == "__main__":
     ax.plot(generateLSIG.startIndex, np.abs(lsig)[generateLSIG.startIndex],'o')
     ax.plot(generateLSIG.endIndex, np.abs(lsig)[generateLSIG.endIndex],'o')
     fig.suptitle("Time domain signal")
+    fig.show()
+
+    generateLegacyPreamble(BW, samplingRate, LSIG_bits, 100e-9)
+    preamble = generateLegacyPreamble.result
+    preamble = 10*np.log10(np.abs(preamble)**2)
+    fig, ax = plt.subplots()
+    ax.plot(preamble)
+    ax.plot(generateLegacyPreamble.startIndex, preamble[generateLegacyPreamble.startIndex],'o', color="tab:orange")
+    ax.plot(generateLegacyPreamble.midIndex1, preamble[generateLegacyPreamble.midIndex1],'o', color="tab:orange")
+    ax.plot(generateLegacyPreamble.midIndex2, preamble[generateLegacyPreamble.midIndex2],'o', color="tab:orange")
+    ax.plot(generateLegacyPreamble.endIndex, preamble[generateLegacyPreamble.endIndex],'o', color="tab:orange")
     fig.show()
 
     # generateLSTFandLLTF(BW, samplingRate, 100e-9)
