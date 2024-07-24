@@ -5,7 +5,7 @@ def Interleaver(input, N_CBPS):
 
     output = []
 
-    s = max(int(N_CBPS/2), 1)
+    s = int(max(int(N_CBPS/2), 1))
     size = len(input)
 
     for j in range(size):
@@ -17,6 +17,39 @@ def Interleaver(input, N_CBPS):
 
     return output
 
+class interleaver:
+    def __init__(self):
+        self.input = None
+        self.output = None
+
+        self.deInterIndex = None
+        self.beInterIndex = None
+
+    def __call__(self,input,N_CBPS):
+        self.input = input
+        self.output = None
+
+        s = np.floor(max(int(N_CBPS/2), 1))
+        size = len(input)
+        k = np.arange(0,size) #indext deinterleaved
+        i = (size/16)*(k % 16) + np.floor(k/16)
+        j = s * np.floor(i/s) + (i + size - np.floor(16*i/size)) % s #index interleaved
+
+        self.deInterIndex = k
+        self.beInterIndex = j
+
+    def backward(self):
+        self.output = np.zeros(len(self.input))
+        for index in range(len(self.input)):
+            self.output[int(self.deInterIndex[index])] = self.input[int(self.beInterIndex[index])]
+        return self.output
+    
+    def forward(self):
+        self.output = np.zeros(len(self.input))
+        for index in range(len(self.input)):
+            self.output[int(self.beInterIndex[index])] = self.input[int(self.deInterIndex[index])]
+        return self.output
+interleaver = interleaver()
 
 def Deinterleaver(input, N_CBPS, output):
     ret = 0
@@ -52,7 +85,6 @@ class BCCDeinterleaver:
         
         i = s * np.floor(j / s) + (j + np.floor(cls.N_COL * j / cls.N_CBPSSI)) % s
         k = cls.N_COL * i - (cls.N_CBPSSI - 1) * np.floor(i / cls.N_ROW)
-        print(k)
         output = np.zeros(len(input), dtype=input.dtype)  # Initialize output array
         for index in range(len(input)):
             output[int(k[index])] = input[index]
