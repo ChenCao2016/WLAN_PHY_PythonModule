@@ -5,6 +5,8 @@ from .Constellation import *
 from .ChannelCoding import *
 from scipy.fft import fft, ifft, fftshift, fftfreq
 
+from matplotlib import pyplot
+
 
 # ----------------------------------------------------------------------
 # Legacy SIG field demodulation
@@ -32,14 +34,34 @@ def LSIG_demodulator(samples, samplingRate, LSTF_endIndex, LLTF_channel, LSIG_sy
         temp = fftshift(fft(samples[startIndex:startIndex + windowSize: ratio]))
 
         # Phase track
-        phaseShift = 0
+        # phaseShift = 0
+        # for i in pilot64.index:
+        #     phaseShift = phaseShift + \
+        #         (temp[i]/LLTF_channel[i]) / \
+        #         pilot64.symbol[pilot64.index.index(i)]
+        # phaseShift = phaseShift/pilot64.num
+
+
+        # Phase and amplitude track
+        pilotShift = []
         for i in pilot64.index:
-            phaseShift = phaseShift + \
-                (temp[i]/LLTF_channel[i]) / \
-                pilot64.symbol[pilot64.index.index(i)]
-        phaseShift = phaseShift/pilot64.num
-        if abs(phaseShift) < 1e-6:
-            phaseShift = 1
+            pilotShift.append((temp[i]/LLTF_channel[i]) / pilot64.symbol[pilot64.index.index(i)])
+        pilotShift = np.array(pilotShift)
+
+        #pilotShift[:int(len(pilotShift)/2)] = np.conjugate(pilotShift[:int(len(pilotShift)/2)])
+
+        # fig, (ax1,ax2) = pyplot.subplots(2,1)
+        # ax1.plot(np.angle(pilotShift))
+        # ax1.set_xlabel('Sample Index')
+        # ax1.set_ylabel('channel phase')
+        # ax1.set_title('channel phase')
+        # ax2.plot(np.abs(pilotShift))
+        # ax2.set_xlabel('Sample Index')
+        # ax2.set_ylabel('channel amplitude')
+        # ax2.set_title('channel amplitude')
+        # fig.show()
+
+        pilotShiftmean = np.mean(pilotShift)
 
         symbol = []
         for i in range(len(LLTF_channel)):
@@ -48,7 +70,7 @@ def LSIG_demodulator(samples, samplingRate, LSTF_endIndex, LLTF_channel, LSIG_sy
                     # symbol.append(0);
                     pass
                 else:
-                    symbol.append(temp[i]/LLTF_channel[i]/phaseShift)
+                    symbol.append(temp[i]/LLTF_channel[i]/pilotShiftmean)
 
         # -----------------------------------------------------------------------------------------------------------
         # RL-SIG detection
@@ -82,7 +104,7 @@ def LSIG_demodulator(samples, samplingRate, LSTF_endIndex, LLTF_channel, LSIG_sy
             correlation += symbol[i]*conj(symbol2[i])
             power += abs(symbol[i])*abs(symbol2[i])
 
-        print(f"RL-SIG detection: {abs(correlation)/power}")
+        #print(f"RL-SIG detection: {abs(correlation)/power}")
         if abs(correlation)/power > 0.9:
             # This is 11AX
             # MRC
